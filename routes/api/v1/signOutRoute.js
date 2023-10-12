@@ -1,11 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const {signUp} = require('../controllers/signUpController');
+const {signOut} = require('../../../controllers/signOutController');
 
 
-
-
-router.post('/signup', signUp)
+router.post('/signin', signOut)
 
 
 

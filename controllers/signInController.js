@@ -1,7 +1,8 @@
 const User = require('../model/User');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
-
+const jwt = require('jsonwebtoken');
+const {signToken} = require('./signUpController')
 const signIn = async (req, res) => {
   const { email, password } = req.body;
 
@@ -21,10 +22,13 @@ const signIn = async (req, res) => {
     }
 
     // If both email and password are valid, store user information in the session
-    req.session.userId = user._id;
-    console.log(`seseeionID: ${req.session.userId}`)
-
-    return res.status(200).json({ message: 'Sign-in successful', user: user });
+    // req.session.userId = user._id;
+    // console.log(`seseeionID: ${req.session.userId}`)
+    // const token = jwt.sign({ id: newUser._id }, process.env.SECRET_STR, { expiresIn: process.env.LOGIN_EXPIRES })
+  
+    const token = signToken(user._id);
+          
+    return res.status(200).json({ message: 'Sign-in successful' });
 
   } catch (error) {
     console.error('Error during sign-in:', error);

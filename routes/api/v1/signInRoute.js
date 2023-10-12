@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const {signIn} = require('../controllers/signInController');
+const {signIn} = require('../../../controllers/signInController');
 const { verify } = require('crypto');
 
 
-router.post('/signin', signIn);
+router.post('/api/v1/user/signin', signIn);
 
 
 

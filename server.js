@@ -80,11 +80,11 @@ require('dotenv').config();
 
 
 // Import your routes and other necessary modules here
-const userRoute = require('./routes/userRoute');
+const userRoute = require('./routes/api/v1/userRoute');
 const adminRoute = require('./routes/adminRoute');
-const signupRoute = require('./routes/signUpRoute');
-const signinRoute = require('./routes/signInRoute');
-const signOutRoute = require('./routes/signOutRoute');
+const signupRoute = require('./routes/api/v1/signUpRoute');
+const signinRoute = require('./routes/api/v1/signInRoute');
+const signOutRoute = require('./routes/api/v1/signOutRoute');
 
 const port = process.env.PORT || 3000;
 

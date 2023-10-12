@@ -8,7 +8,7 @@ router.get('/admin/dashboard');
 router.get('/admin/users', getAllUsers);
 router.get('/admin/user/:userId', getUser);
 router.delete('/admin/user/:userId', deleteUser);
-router.delete('admin//users', deleteAllUser);
+router.delete('/admin/users', deleteAllUser);
 
 
 module.exports = router;

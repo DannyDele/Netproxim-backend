@@ -1,5 +1,21 @@
 const User = require('../model/User');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+
+
+
+// Json web token assigned to user function
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.SECRET_STR, { expiresIn: process.env.LOGIN_EXPIRES })
+}
+
+
+
+
+
+
 
 const editUser = async (req, res) => {
   try {
@@ -38,24 +54,83 @@ const getUserInfo =  async (req, res) => {
   }
 };
 
+const forgotPassword = async(req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
 
-const resetPassword = async (req, res) => {
-  const { id } = req.params;
-  const password = req.body;
-  try{
-    const user = await User.findById(id);
-    if (!user) {
-      return res.send(404).json({ msg: 'can not update password' });
-    }
-    const resetPasssword = await bcrypt.hash(password, 12)
-    user.password = resetPasssword
-    await user.save()
+  if (!user) {
+    res.status(404).json({ msg: "User with this email does not exist in the database" });
+    next()
   }
-  catch (err) {
-    console.log('Error resetting password:', err);
-    res.send(200).json(User.password)
+
+    const resetToken = user.createResetPasswordToken();
+    await user.save();
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/user/resetpassword/${resetToken}`
+    
+
+     //Create Email Transport    
+      const transporter = nodemailer.createTransport({
+      host: process.env.GMAIL_HOST,    // Gmail SMTP server
+      port: process.env.GMAIL_PORT,                // SMTP port
+      secure: true,             // Use SSL/TLS
+      auth: {
+          user: process.env.GMAIL_USER,  // Your Gmail email address
+          pass: process.env.GMAIL_PASS,    // Your Gmail password
+
+  },
+});
+
+        //Send the random password to the user's email
+        const mailOptions = {
+          from: 'Smart ID Card Solution <process.env.GMAIL_USER>', // Sender's email address
+          to: user.email,                       // User's email address
+          subject: 'Password Reset',
+          html: `
+    We have recieved a passwordReset. Pleease the below link to reset your password <br>
+    ${resetUrl} This reset password link will be valid for only 10min
+    
+  `,
+};
+      
+
+ transporter.sendMail(mailOptions, (error, info) => {
+  if (error) {
+    console.error('Error sending email:', error);
+    user.passwordResetToken = undefined;
+    user.passwordResetTokenExpires = undefined;
+    user.save();
+    return res.status(500).json({ error: 'Error sending email' });
+  } else {
+    console.log('Email sent:', info.response);
+    return res.status(200).json({ message: 'Password Reset Link Sent' });
   }
+});
+  }
+
+
+const resetPassword = async (req, res, next) => {
+  const token = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  const user = await User.findOne({ passwordResetToken: token, passwordResetTokenExpires: { $gt: Date.now() } });
+  
+
+  if (!user) {
+  return res.status(404).json({ msg: 'Token is invalid or as expired' });
+}
+
+user.password = req.body.password;
+user.confirmPassword = req.body.confirmPassword;
+user.resetResetToken = undefined;
+user.passwordResetTokenExpires = undefined;
+user.passwordChangedAt = Date.now();
+  
+  // Save the user
+  await user.save();
+  
+  // Login in the User
+  const loginToken = signToken(user._id);
+   
+  return res.status(200).json({ msg: 'password reset successfull', loginToken });
+
 }
 
 
-module.exports = {  editUser , getUserInfo };
+module.exports = {  editUser , getUserInfo, resetPassword, forgotPassword };

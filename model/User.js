@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
+const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 // const passportLocalMongoose = require('passport-local-mongoose');
 
 const userSchema = Schema({
@@ -22,7 +24,9 @@ const userSchema = Schema({
     },
     email: {
         type: String,
-        required: [true, 'Email is Required']
+        required: [true, 'Email is Required'],
+        // unique: true,
+        // lowercase: true
     },
     phoneNumber: {
         type: String,
@@ -34,6 +38,18 @@ const userSchema = Schema({
     },
     password: {
         type: String,
+        required: [true, 'Please enter a password'],
+        minlength: 8
+    },
+    confirmPassword: {
+        type: String,
+        required: [true, 'Please confirm password'],
+        validate: {
+            validator: function (val) {
+                return val == this.password
+            },
+            message: 'Password and confirmPassword does not match'
+        }
     },
     qrCodeUrl: {
     type: String,
@@ -48,10 +64,20 @@ const userSchema = Schema({
     enum: ['user', 'admin', 'superAdmin'],
     default: 'user',
     },
-    resetToken: String
+    passwordResetToken: String,
+    passwordChangedAt: Date,    
+    passwordResetTokenExpires: Date
 
     
 });
+
+userSchema.methods.createResetPasswordToken = function() {
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    this.passwordResetTokenExpires = Date.now() + 10 * 60 * 1000;
+     console.log(resetToken, this.passwordResetToken)
+    return resetToken;
+}
 
 // userSchema.plugin(passportLocalMongoose);
 

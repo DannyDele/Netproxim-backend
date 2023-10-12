@@ -5,8 +5,27 @@ const AppError = require('../utils/errorHandlers/AppError');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer'); // Require nodemailer
 const session = require('express-session');
+const jwt = require('jsonwebtoken');
+
+   
+
+// Json web token assigned to user function
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.SECRET_STR, { expiresIn: process.env.LOGIN_EXPIRES })
+}
 
 
+   //Create Email Transport    
+      const transporter = nodemailer.createTransport({
+      host: process.env.GMAIL_HOST,    // Gmail SMTP server
+      port: process.env.GMAIL_PORT,                // SMTP port
+      secure: true,             // Use SSL/TLS
+      auth: {
+          user: process.env.GMAIL_USER,  // Your Gmail email address
+          pass: process.env.GMAIL_PASS,    // Your Gmail password
+
+  },
+});
 
 
 const generateRandomPassword = (length) => {
@@ -28,17 +47,6 @@ function generateUniqueToken(length = 32) {
 
 const uniqueToken = generateUniqueToken();
 
-
-// const transporter = nodemailer.createTransport({
-//   host: 'smtp.gmail.com',    // Gmail SMTP server
-//   port: 465,                // SMTP port (465 for SSL/TLS)
-//   secure: true,             // Use SSL/TLS
-//   auth: {
-//     user: process.env.GMAIL_USER,  // Your Gmail email address
-//     pass: process.env.GMAIL_PASS,    // Your Gmail password
-
-//   },
-// });
 
 
 
@@ -67,6 +75,7 @@ const signUp = async (req, res) => {
       businessName: businessName,
       role: role,
       password: hashPassword,
+      confirmPassword: hashPassword,
       uniqueID: uniqueID ,         //Storing the unique ID in the user document
       resetToken: uniqueToken
     });
@@ -78,54 +87,57 @@ const signUp = async (req, res) => {
         return res.status(500).json({ error: 'Error generating QR code' });
       } else {
         newUser.qrCodeUrl = url; // Store the QR code URL in the user object
+         
+        // signing a jwt token to a user
+        const token = signToken(newUser._id);
 
-        // Save the user to the database, including the QR code URL
+          // Save the user to the database, including the QR code URL
         await newUser.save();
-        req.session.userId = newUser._id  //save user in the session
-    
+        res.status(200).json({ msg: 'User Saved Successfully!!', token, data:{user: newUser}});
 
+    
+  
         //Send the random password to the user's email
-//         const mailOptions = {
-//           from: 'Smart ID Card Solution <danielpop660@gmail.com>', // Sender's email address
-//           to: email,                       // User's email address
-//           subject: 'Smart ID Card Solutions',
-//           html: `
-//     <p>Dear ${firstName} ${lastName},</p>
-//     <p>Welcome to Smart ID Card Solutions! We are excited to have you as a member of our community.</p>
-//     <p>Your registration is complete, and you can now showcase your business information effortlessly.</p>
-//     <p>Here are your registration details:</p>
-//     <ul>
-//       <li><strong>Username:</strong> ${username}</li>
-//       <li><strong>Email:</strong> ${email}</li>
-//       <li><strong>Phone Number:</strong> ${phoneNumber}</li>
-//       <li><strong>Business Name:</strong> ${businessName}</li>
-//     </ul>
-//     <p>Your random password is: <strong>${randomPassword}</strong></p>
-//     <p><em>Note: You can change your password after successfully signing in.</em></p>
-//     <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
-//     <p>Thank you for choosing Smart ID Card Solutions!</p>
-//     <p>Best regards,<br>Your Smart ID Card Solutions Team</p>
-//   `,
-// };
+        const mailOptions = {
+          from: 'Smart ID Card Solution <process.env.GMAIL_USER>', // Sender's email address
+          to: email,                       // User's email address
+          subject: 'Smart ID Card Solutions',
+          html: `
+    <p>Dear ${firstName} ${lastName},</p>
+    <p>Welcome to Smart ID Card Solutions! We are excited to have you as a member of our community.</p>
+    <p>Your registration is complete, and you can now showcase your business information effortlessly.</p>
+    <p>Here are your registration details:</p>
+    <ul>
+      <li><strong>Username:</strong> ${username}</li>
+      <li><strong>Email:</strong> ${email}</li>
+      <li><strong>Phone Number:</strong> ${phoneNumber}</li>
+      <li><strong>Business Name:</strong> ${businessName}</li>
+    </ul>
+    <p>Your random password is: <strong>${randomPassword}</strong></p>
+    <p><em>Note: You can change your password after successfully signing in.</em></p>
+    <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
+    <p>Thank you for choosing Smart ID Card Solutions!</p>
+    <p>Best regards,<br>Your Smart ID Card Solutions Team</p>
+  `,
+};
       
 
-        // transporter.sendMail(mailOptions, (error, info) => {
-        //   if (error) {
-        //     console.error('Error sending email:', error);
-        //     return res.status(500).json({ error: 'Error sending email' });
-        //   } else {
-        //     console.log('Email sent:', info.response);
-        //     return res.status(200).json({ message: 'Email sent with random password' });
-        //   }
-        // });
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error('Error sending email:', error);
+            return res.status(500).json({ error: 'Error sending email' });
+          } else {
+            console.log('Email sent:', info.response);
+            return res.status(200).json({ message: 'Email sent with random password' });
+          }
+        });
       }
     });
-
-    console.log('User Saved Successfully!!');
+      console.log('User Created Successfully!!')
   } catch (error) {
     console.error('Error during user registration:', error);
     return res.status(500).json({ error: 'Server error' });
   }
 };
 
-module.exports = { signUp };
+module.exports = { signUp, signToken };
