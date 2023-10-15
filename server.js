@@ -66,7 +66,10 @@
 //     console.log(`Server Up on PORT: ${port}`)
 // });
 
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
 
+}
 
 const express = require('express');
 const app = express();
@@ -76,15 +79,12 @@ const http = require('http'); // Import the http module for WebSocket server
 const WebSocket = require('ws'); // Import the WebSocket library
 const session = require('express-session');
 const flash = require('connect-flash');
-require('dotenv').config();
 
 
-// Import your routes and other necessary modules here
+// Importing routes and other necessary modules here
 const userRoute = require('./routes/api/v1/userRoute');
-const adminRoute = require('./routes/adminRoute');
-const signupRoute = require('./routes/api/v1/signUpRoute');
-const signinRoute = require('./routes/api/v1/signInRoute');
-const signOutRoute = require('./routes/api/v1/signOutRoute');
+const adminRoute = require('./routes/api/v2/adminRoute');
+const authRoute = require('./routes/api/v1/auth/authRoute') 
 
 const port = process.env.PORT || 3000;
 
@@ -110,15 +110,16 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+
 app.set('views', path.join(__dirname, '/views'));
 app.set('view engine', 'ejs');
 
 // Routes
 app.use('/', userRoute);
 app.use('/', adminRoute)
-app.use('/', signupRoute);
-app.use('/', signinRoute);
-app.use('/', signOutRoute);
+app.use('/', authRoute);
+
+
 
 // Error Handle Middleware
 app.use((err, req, res, next) => {
@@ -138,6 +139,19 @@ wss.on('connection', (ws) => {
     // Handle WebSocket messages here
     // Example: You can process the message (unique ID) and send back user information
     // ws.send(JSON.stringify(userInfo));
+      try {
+      // Parse the QR code data (JSON in this case) received from the client
+      const qrCodeData = JSON.parse(message);
+      const uniqueID = qrCodeData.uniqueID;
+
+      // Construct the redirect URL
+      const redirectURL = `/getuserinfo/${uniqueID}`;
+
+      // Send the redirect URL to the WebSocket client
+      ws.send(JSON.stringify({ redirectURL }));
+    } catch (error) {
+      console.error('Error processing QR code data:', error);
+    }
   });
 });
 

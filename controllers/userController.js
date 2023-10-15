@@ -15,6 +15,22 @@ const signToken = (id) => {
 
 
 
+const getUser = async (req, res) => {
+  try {
+    const userId = req.params.userId; // Assuming you pass the user ID as a route parameter
+    const user = await User.findById(userId).select('-password  -confirmPassword');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+
 
 
 const editUser = async (req, res) => {
@@ -133,4 +149,4 @@ user.passwordChangedAt = Date.now();
 }
 
 
-module.exports = {  editUser , getUserInfo, resetPassword, forgotPassword };
+module.exports = {  getUser,editUser , getUserInfo, resetPassword, forgotPassword };

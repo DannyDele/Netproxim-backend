@@ -32,9 +32,21 @@ const userSchema = Schema({
         type: String,
         required: [true, 'Phone Number is Required']
     },
-    businessName: {
-        type: String,
-        required: [true, 'Business Name is Required']
+   businessLogo: {
+  filename: {
+    type: String,
+    required: true
+  },
+  url: {
+    type: String,
+    required: true
+  }
+},
+
+   role: {
+    type: String,
+    enum: ['user', 'admin', 'superAdmin'],
+    default: 'user',
     },
     password: {
         type: String,
@@ -54,19 +66,15 @@ const userSchema = Schema({
     qrCodeUrl: {
     type: String,
   },
-   
-    // business_logo: {
-    //     type: String,
-    //     required: [true, 'Email is Required']
-    // },
-     role: {
-    type: String,
-    enum: ['user', 'admin', 'superAdmin'],
-    default: 'user',
-    },
+
     passwordResetToken: String,
     passwordChangedAt: Date,    
-    passwordResetTokenExpires: Date
+    passwordResetTokenExpires: Date,
+    
+    scanCount: {
+    type: Number,
+    default: 0, // Initialize the scan count to 0
+  }
 
     
 });

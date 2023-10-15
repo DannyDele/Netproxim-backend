@@ -1,16 +1,22 @@
-const session = require('express-session')
-const express = require('express')
-const router = express.Router()
 
-const isLoggedIn = router.use((req, res, next) => {
-    if (req.session.userId) {
-      return next()
-    // The user is signed in, you can fetch their profile or perform other actions
-    // using req.session.userId to identify the user
-    } else {
-        return res.status(300).json({msg: 'you must me signedIn'})
-    // The user is not signed in
+
+
+
+const isLoggedIn = (req, res, next) => {
+  const testToken = req.headers.authorization;
+  let token;
+  if (testToken && testToken.startsWith('Bearer ')) {
+    token = testToken.split(' ')[1];
   }
-});
 
-module.export = {router, isLoggedIn}
+  if (!token) {
+    return res.status(401).json({ msg: 'You need to be logged in first' });
+  }
+
+  // If a token is found, call the next middleware or route handler
+  next();
+  j
+
+};
+
+module.exports = { isLoggedIn };
