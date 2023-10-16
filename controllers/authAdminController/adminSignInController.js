@@ -1,29 +1,26 @@
 const User = require('../../model/User');
 const bcrypt = require('bcrypt');
-const session = require('express-session');
 const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
 
 
 
-
-const signIn = async (req, res) => {
+const adminSignIn = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const adminUser = await User.findOne({ email });
 
-    if (!user) {
+    if (!adminUser) {
       return res.status(400).json({ error: 'Email or Password incorrect' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, adminUser.password);
 
     if (!isPasswordValid) {
       return res.status(400).json({ error: 'Email or Password incorrect' });
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.SECRET_STR, { expiresIn: process.env.LOGIN_EXPIRES });
+    const token = jwt.sign({ id: adminUser._id, role: adminUser.role }, process.env.SECRET_STR, { expiresIn: process.env.LOGIN_EXPIRES });
 
     // Set the token in the Authorization header
     res.setHeader('Authorization', `Bearer ${token}`);
@@ -36,10 +33,5 @@ const signIn = async (req, res) => {
   }
 };
 
-module.exports = { signIn };
-
-
-
-
-
+module.exports = { adminSignIn };
 

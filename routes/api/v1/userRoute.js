@@ -4,11 +4,12 @@ const {editUser, getUserInfo, forgotPassword, resetPassword, getUser} = require(
 const { isLoggedIn  } = require('../../../middleware/isLoggedIn');
 
 
-router.get('/getuserinfo/:uniqueid', getUserInfo);
+
 router.get('/api/v1/user/:userId', isLoggedIn, getUser);
+router.get('/getuserinfo/:uniqueid', getUserInfo);
 router.post('/api/v1/user/forgotpassword', forgotPassword);
 router.patch('/api/v1/user/resetpassword/:token', resetPassword);
-router.patch('/api/v1/user/:userid', editUser)
+router.patch('/api/v1/user/:userid', isLoggedIn, editUser)
 
 
 
