@@ -129,14 +129,7 @@ const adminSignUp = handleAsync (async (req, res) => {
     newAdmin.refreshToken = refreshToken;
     await newAdmin.save();
     
-     res.setHeader('Authorization', `Bearer ${refreshToken}`);
 
-    res.cookie('jwtCookie', refreshToken, {
-      httpOnly: true,
-      // secure: true,
-      sameSite: 'None',
-      maxAge: 24 * 60 * 60 * 1000,
-    });
 
         console.log(accessToken)
 

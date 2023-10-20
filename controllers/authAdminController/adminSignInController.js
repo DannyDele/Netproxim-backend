@@ -51,6 +51,8 @@ const adminSignIn = handleAsync (async (req, res) => {
       sameSite: 'None',
       maxAge: 24 * 60 * 60 * 1000,
     });
+    
+        // res.setHeader('Authorization', `Bearer ${accessToken}`);
 
 
     // Return a success response
