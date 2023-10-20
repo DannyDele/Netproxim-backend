@@ -13,7 +13,7 @@ const { isAdmin } = require('../../../middleware/isAdmin');
 
 router.get('/api/v2/admin/dashboard');
 router.get('/api/v2/admin/users', isAdmin, getAllUsersForAdmin);
-router.get('/api/v2/admin/user/:userId',isAdmin, getUserForAdmin);
+router.get('/api/v2/admin/user/:userId', getUserForAdmin);
 router.post('/api/v2/admin/signup', upload.single('businessLogo'), adminSignUp);
 router.post('/api/v2/admin/signin', adminSignIn)
 router.delete('/api/v2/admin/user/:userId', deleteUser);
