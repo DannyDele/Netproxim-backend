@@ -79,28 +79,35 @@ const http = require('http'); // Import the http module for WebSocket server
 const WebSocket = require('ws'); // Import the WebSocket library
 const session = require('express-session');
 const flash = require('connect-flash');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 
 
 // Importing routes and other necessary modules here
 const userRoute = require('./routes/api/v1/userRoute');
 const adminRoute = require('./routes/api/v2/adminRoute');
-const authRoute = require('./routes/api/v1/auth/authRoute') 
+const authRoute = require('./routes/api/v1/auth/authRoute');
+const refreshRoute = require('./routes/api/v1/auth/refresh'); 
 
 const port = process.env.PORT || 3000;
 
-// File Imports
-// const User = require('./model/user');
 
-const server = async () => {
+async function connectToDatabase() {
   try {
-    await mongoose.connect('mongodb://127.0.0.1:27017/smartIdCardSolution');
-    console.log('Mongo Server Up and Running!');
-  } catch {
-    console.log('Mongo Server Down!!');
+    await mongoose.connect("mongodb+srv://danielpope660:sF791PfhkXIxreif@cluster0.9gzokil.mongodb.net/smartIdCardSystem?retryWrites=true&w=majority", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true, // Use the new server discovery and monitoring engine
+    });
+    console.log('MongoDB database Connection Established Successfully!!');
+  } catch (error) {
+    console.error('MongoDB database Connection Failed:', error);
   }
-};
+}
 
-server();
+// Call the function to establish the connection
+connectToDatabase();
+
+
+
 
 const config = { secret: 'notagoodsecret', resave: false, saveUninitialized: false };
 app.use(session(config));
@@ -118,6 +125,7 @@ app.set('view engine', 'ejs');
 app.use('/', userRoute);
 app.use('/', adminRoute)
 app.use('/', authRoute);
+app.use('/', refreshRoute)
 
 
 
@@ -125,7 +133,6 @@ app.use('/', authRoute);
 app.use((err, req, res, next) => {
   const { message = 'something went wrong', status = 500 } = err;
   res.status(status).send(message);
-  next();
 });
 
 // Create an HTTP server that Express and WebSocket will share

@@ -1,20 +1,20 @@
+const User = require('../../model/User');
 
+const signOut = async (req, res) => {
+  const cookies = req.cookies; 
+  if (!cookies?.jwtCookie) return res.status(401);
 
-const signOut = (req, res) => {
-  try {
-    // Destroy the user's session
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Error during sign-out:', err);
-        return res.status(500).json({ error: 'Server error' });
-      }
-      return res.status(200).json({ message: 'Sign-out successful' });
-    });
-  } catch (error) {
-    console.error('Error during sign-out:', error);
-    return res.status(500).json({ error: 'Server error' });
-  }
+  const refreshToken = cookies.jwtCookie;
+  const user = await User.findOne({ refreshToken }).exec();
+  if (!user) return res.sendStatus(403);
+
+  // Clear refreshToken from database
+  user.refreshToken = '';
+  await user.save();
+
+  // Clear accessToken from memory
+  res.clearCookie('jwtCookie');
+  res.sendStatus(200); 
 };
 
-
-module.exports = {signOut}
+module.exports = { signOut };

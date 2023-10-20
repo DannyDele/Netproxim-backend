@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const QRcode = require('qrcode');
 const nodemailer = require('nodemailer'); // Require nodemailer
+const handleAsync = require('../../utils/errorHandlers/handleAsync')
 
 
 
@@ -45,7 +46,7 @@ const uniqueToken = generateUniqueToken();
 
 
 
-const adminSignUp = async (req, res) => {
+const adminSignUp = handleAsync (async (req, res) => {
   try {
     // Check if the user making the request is authorized (e.g., superadmin)
     // Implement your own authorization logic here
@@ -54,7 +55,7 @@ const adminSignUp = async (req, res) => {
     const { username, firstName, lastName, email, phoneNumber, businessName, businessLogo } = req.body;
 
     // Set the role to "admin" programmatically
-    const role = 'admin';
+    const roles = 'admin';
 
     const existingUserWithEmail = await User.findOne({ email });
 
@@ -72,6 +73,7 @@ const adminSignUp = async (req, res) => {
   
     const uniqueID = crypto.randomUUID(); //Generating UniqueID for User
     const randomPassword = generateRandomPassword(8);
+     const imageId = crypto.randomUUID()
     console.log(randomPassword);
     const hashPassword = await bcrypt.hash(randomPassword, 12);
 
@@ -84,7 +86,7 @@ const adminSignUp = async (req, res) => {
       phoneNumber: phoneNumber,
       businessName: businessName,
       businessLogo: businessLogo,
-      role: role, // Set the role to "admin"
+      roles: roles, // Set the role to "admin"
       password: hashPassword,
       confirmPassword: hashPassword,
       uniqueID: uniqueID,
@@ -92,7 +94,7 @@ const adminSignUp = async (req, res) => {
     });
 
     // Save image cloudinary path to the database
-     newAdmin.businessLogo = { url: req.file.path, filename: req.file.filename };
+     newAdmin.businessLogo = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
        // Generate the QR code using userWithoutPassword and store the URL in newUser.qrCodeUrl
     QRcode.toDataURL(JSON.stringify(`${req.protocol}://${req.get('host')}/getuserinfo/${uniqueID}`), async (err, url) => {
       if (err) {
@@ -102,18 +104,45 @@ const adminSignUp = async (req, res) => {
         newAdmin.qrCodeUrl = url; // Store the QR code URL in the user object
         }
          
-        // signing a jwt token to a user
-      const token = jwt.sign({ id: newAdmin._id, role: newAdmin.role }, process.env.SECRET_STR, { expiresIn: process.env.LOGIN_EXPIRES });
+      //   // signing a jwt token to a user
+      // const Accesstoken = jwt.sign({ id: newAdmin._id, role: newAdmin.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.LOGIN_EXPIRES });
+      // const refreshToken = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRES });
+      // newUser.refreshToken = refreshToken;
 
-       // Set the token in the Authorization header
-       res.setHeader('Authorization', `Bearer ${token}`);
+      //  // Set the token in the Authorization header
+      //  res.setHeader('Authorization', `Bearer ${Accesstoken}`);
 
-        console.log(token)
+       const roles = newAdmin.roles;
+    const accessToken = jwt.sign(
+      { newAdmin: { id: newAdmin._id, roles: newAdmin.roles } },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: '10m' }
+    );
+    
+    const refreshToken = jwt.sign(
+      { newAdmin: { id: newAdmin._id, roles: newAdmin.roles } },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    // Store refreshToken in database
+    newAdmin.refreshToken = refreshToken;
+    await newAdmin.save();
+    
+     res.setHeader('Authorization', `Bearer ${refreshToken}`);
+
+    res.cookie('jwtCookie', refreshToken, {
+      httpOnly: true,
+      // secure: true,
+      sameSite: 'None',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+        console.log(accessToken)
 
 
     // Save the admin user
-    await newAdmin.save();
-      res.status(200).json({ msg: 'Admin user created successfully!!', data: { user: newAdmin } });
+      res.status(200).json({ msg: 'Admin user created successfully!!', accessToken,data: { user: newAdmin } });
       
    
         //Send the random password to the user's email
@@ -155,6 +184,6 @@ const adminSignUp = async (req, res) => {
     console.error('Error during admin registration:', error);
     return res.status(500).json({ error: 'Server error' });
   }
-};
+});
 
 module.exports = { adminSignUp };

@@ -17,28 +17,24 @@ const isLoggedIn = async (req, res, next) => {
   }
 
   // If a token is found, call the next middleware or route handler
-  next();
   try {
      // Validate the token
   const decoded = await util.promisify(jwt.verify)(token, process.env.SECRET_STR);
     console.log(decoded)
     
     // check if the user still exist
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded._id);
     if (!user) {
       return res.status(401).json({msg: 'The user with that token does not exist'})
     }
+      next();
+
 
   } catch (error) {
-    if (error instanceof TokenExpiredError) {
-      // Handle token expiration error
+  
       return res.status(401).json({ msg: 'Token has expired' });
-    } else {
-      // Handle other JWT verification errors
-      return res.status(401).json({ msg: 'Invalid token' });
-    }
+    } 
   }
-}
 
 ;
 
