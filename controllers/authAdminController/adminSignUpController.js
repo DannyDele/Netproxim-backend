@@ -1,14 +1,15 @@
 const User = require('../../model/User');
-const QRcode = require('qrcode');
 const bcrypt = require('bcrypt');
-const AppError = require('../../utils/errorHandlers/AppError');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer'); // Require nodemailer
-const session = require('express-session');
 const jwt = require('jsonwebtoken');
+const QRcode = require('qrcode');
+const nodemailer = require('nodemailer'); // Require nodemailer
 const handleAsync = require('../../utils/errorHandlers/handleAsync')
 
-   
+
+
+
+ 
 
 //    //Create Email Transport    
 //       const transporter = nodemailer.createTransport({
@@ -45,11 +46,16 @@ const uniqueToken = generateUniqueToken();
 
 
 
-const signUp = handleAsync (async (req, res) => {
-  const { username, firstName, lastName, email, phoneNumber, businessName, businessLogo, roles } = req.body;
- 
-
+const adminSignUp = handleAsync (async (req, res) => {
   try {
+    // Check if the user making the request is authorized (e.g., superadmin)
+    // Implement your own authorization logic here
+
+    // If authorized, proceed with admin registration
+    const { username, firstName, lastName, email, phoneNumber, businessName, businessLogo } = req.body;
+
+    // Set the role to "admin" programmatically
+    const roles = 'admin';
 
     const existingUserWithEmail = await User.findOne({ email });
 
@@ -57,20 +63,22 @@ const signUp = handleAsync (async (req, res) => {
       return res.status(400).json({ error: 'Email is already registered. Please use a different email address.' });
     }
 
+    // The rest of your signup logic remains the same
     const existingUser = await User.findOne({ username });
-
+    
     if (existingUser) {
       return res.status(400).json({ error: 'Username is taken, please choose another username.' });
     }
 
+  
     const uniqueID = crypto.randomUUID(); //Generating UniqueID for User
-    const imageId = crypto.randomUUID()
     const randomPassword = generateRandomPassword(8);
+     const imageId = crypto.randomUUID()
     console.log(randomPassword);
     const hashPassword = await bcrypt.hash(randomPassword, 12);
 
-    
-    const newUser = new User({
+    // Create a new admin user
+    const newAdmin = new User({
       username: username,
       firstName: firstName,
       lastName: lastName,
@@ -78,53 +86,50 @@ const signUp = handleAsync (async (req, res) => {
       phoneNumber: phoneNumber,
       businessName: businessName,
       businessLogo: businessLogo,
-      // profilePic: profilePic,
-      roles: roles,
+      roles: roles, // Set the role to "admin"
       password: hashPassword,
       confirmPassword: hashPassword,
-      uniqueID: uniqueID ,         //Storing the unique ID in the user document
-      resetToken: uniqueToken
+      uniqueID: uniqueID,
+      resetToken: uniqueToken,
     });
+
     // Save image cloudinary path to the database
-     newUser.businessLogo = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
-    //  newUser.profilePic = { url: req.files.path, filename: req.files.filename };
-     console.log(res.file)
-
-
-
-    // Generate the QR code using userWithoutPassword and store the URL in newUser.qrCodeUrl
+     newAdmin.businessLogo = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
+       // Generate the QR code using userWithoutPassword and store the URL in newUser.qrCodeUrl
     QRcode.toDataURL(JSON.stringify(`${req.protocol}://${req.get('host')}/getuserinfo/${uniqueID}`), async (err, url) => {
       if (err) {
         console.error('Error generating QR code:', err);
         return res.status(500).json({ error: 'Error generating QR code' });
       } else {
-        newUser.qrCodeUrl = url; // Store the QR code URL in the user object
+        newAdmin.qrCodeUrl = url; // Store the QR code URL in the user object
         }
          
-        // signing a jwt token to a user
-      // const Accesstoken = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.LOGIN_EXPIRES });
+      //   // signing a jwt token to a user
+      // const Accesstoken = jwt.sign({ id: newAdmin._id, role: newAdmin.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.LOGIN_EXPIRES });
       // const refreshToken = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRES });
       // newUser.refreshToken = refreshToken;
 
       //  // Set the token in the Authorization header
       //  res.setHeader('Authorization', `Bearer ${Accesstoken}`);
 
-       const roles = newUser.roles;
+       const roles = newAdmin.roles;
     const accessToken = jwt.sign(
-      { newUser: { id: newUser._id, roles: newUser.roles } },
+      { newAdmin: { id: newAdmin._id, roles: newAdmin.roles } },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: '10m' }
     );
     
     const refreshToken = jwt.sign(
-      { newUser: { id: newUser._id, roles: newUser.roles } },
+      { newAdmin: { id: newAdmin._id, roles: newAdmin.roles } },
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: '1d' }
     );
 
     // Store refreshToken in database
-    newUser.refreshToken = refreshToken;
-        await newUser.save();
+    newAdmin.refreshToken = refreshToken;
+    await newAdmin.save();
+    
+     res.setHeader('Authorization', `Bearer ${refreshToken}`);
 
     res.cookie('jwtCookie', refreshToken, {
       httpOnly: true,
@@ -133,13 +138,12 @@ const signUp = handleAsync (async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-        console.log(accessToken, roles)
+        console.log(accessToken)
 
-          // Save the user to the database, including the QR code URL
-        res.status(200).json({ status: 'User Saved Successfully!!', accessToken, data:{user: newUser}});
-        // console.log(newUser, req.file)
 
-    
+    // Save the admin user
+      res.status(200).json({ msg: 'Admin user created successfully!!', accessToken,data: { user: newAdmin } });
+      
    
         //Send the random password to the user's email
 //         const mailOptions = {
@@ -175,45 +179,11 @@ const signUp = handleAsync (async (req, res) => {
         //     return res.status(200).json({ message: 'User Created Successfully and Email sent with random password' });
         //   }
         // });
-      
-    });
-      console.log('User Created Successfully!!')
+       });
   } catch (error) {
-    console.error('Error during user registration:', error);
+    console.error('Error during admin registration:', error);
     return res.status(500).json({ error: 'Server error' });
   }
 });
 
-
-
-
-const profilePicUpload = handleAsync(async (req, res) => {
-  const { userId } = req.params;
-  try {
-    const existingUser = await User.findOneAndUpdate({ _id: userId }, { profilePic: req.body });
-
-    if (!existingUser) {
-      return res.status(400).json({ error: 'Can not upload profile picture because the user does not exist' });
-    }
-    const imageId = crypto.randomUUID();
-
-    existingUser.profilePic = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
-; // Update the profilePic field
-    await existingUser.save(); // Save the updated user
-    
-    return res.status(200).json({ msg: 'Profile picture saved', data: { existingUser } });
-  } catch (err) {
-    console.log('Error Uploading Profile Photo', err);
-    res.status(500).json({ msg: 'Error Uploading Profile Photo' });
-  }
-});
-
-
-
-
-
-
-
-
-
-module.exports = { signUp, profilePicUpload};
+module.exports = { adminSignUp };

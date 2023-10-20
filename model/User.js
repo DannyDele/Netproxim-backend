@@ -5,54 +5,82 @@ const bcrypt = require('bcrypt');
 // const passportLocalMongoose = require('passport-local-mongoose');
 
 const userSchema = Schema({
+
     uniqueID: {
     type: String,
     unique: true,
     required: true,
   },
+
      username: {
         type: String,
         required: [true, 'Username is Required']
-    }, 
+  }, 
+     
     firstName: {
         type: String,
         required: [true, 'First Name is Required']
-    },
+  },
+    
     lastName: {
         type: String,
         required: [true, 'Last Name is Required']
-    },
+  },
+    
     email: {
         type: String,
         required: [true, 'Email is Required'],
         // unique: true,
         // lowercase: true
-    },
+  },
+    
     phoneNumber: {
         type: String,
         required: [true, 'Phone Number is Required']
-    },
+  },
+    
    businessLogo: {
-  filename: {
-    type: String,
-    required: true
+      filename: {
+         type: String,
+        required: true
   },
   url: {
     type: String,
     required: true
-  }
-},
+     },
+     public_id: {
+      type: String, // Store the Cloudinary public_id
+      required: true
+    }
 
-   role: {
+  },
+   
+   profilePic: {
+      filename: {
+         type: String,
+        
+  },
+  url: {
+    type: String,
+  
+     },
+     public_id: {
+      type: String, // Store the Cloudinary public_id
+    }
+    },
+
+   roles: {
     type: String,
     enum: ['user', 'admin', 'superAdmin'],
     default: 'user',
-    },
+  },
+   
     password: {
         type: String,
         required: [true, 'Please enter a password'],
         minlength: 8
-    },
+  },
+    
     confirmPassword: {
         type: String,
         required: [true, 'Please confirm password'],
@@ -62,19 +90,34 @@ const userSchema = Schema({
             },
             message: 'Password and confirmPassword does not match'
         }
-    },
+  },
+    
     qrCodeUrl: {
     type: String,
   },
 
     passwordResetToken: String,
     passwordChangedAt: Date,    
-    passwordResetTokenExpires: Date,
+  passwordResetTokenExpires: Date,
     
-    scanCount: {
+    refreshToken: {
+    type: String,
+    unique: true, // Ensure that refresh tokens are unique
+  },
+    
+    viewCount: {
     type: Number,
     default: 0, // Initialize the scan count to 0
-  }
+  },
+    
+      viewEvents: [
+    {
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 
     
 });

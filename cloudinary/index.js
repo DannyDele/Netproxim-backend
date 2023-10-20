@@ -13,9 +13,12 @@ const storage = new CloudinaryStorage({
     cloudinary,
     params: {
         folder: 'Smart Idcard Solution',
-        allowedFormats: ['jpg', 'png', 'jpeg'] 
+        allowedFormats: ['jpg', 'png', 'jpeg'],
    }
 })
 
 
 module.exports = {cloudinary, storage}
+
+
+

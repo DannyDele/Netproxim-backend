@@ -1,10 +1,13 @@
+const util = require('util');
+const jwt = require('jsonwebtoken');
+const User = require('../model/User')
 
 
-
-
-const isLoggedIn = (req, res, next) => {
+const isLoggedIn = async (req, res, next) => {
+  // read the token a check if it exist
   const testToken = req.headers.authorization;
   let token;
+ 
   if (testToken && testToken.startsWith('Bearer ')) {
     token = testToken.split(' ')[1];
   }
@@ -14,9 +17,25 @@ const isLoggedIn = (req, res, next) => {
   }
 
   // If a token is found, call the next middleware or route handler
-  next();
-  j
+  try {
+     // Validate the token
+  const decoded = await util.promisify(jwt.verify)(token, process.env.SECRET_STR);
+    console.log(decoded)
+    
+    // check if the user still exist
+    const user = await User.findById(decoded._id);
+    if (!user) {
+      return res.status(401).json({msg: 'The user with that token does not exist'})
+    }
+      next();
 
-};
+
+  } catch (error) {
+  
+      return res.status(401).json({ msg: 'Token has expired' });
+    } 
+  }
+
+;
 
 module.exports = { isLoggedIn };
