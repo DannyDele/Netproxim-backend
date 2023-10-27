@@ -1,6 +1,6 @@
 const User = require('../../model/User');
 const QRcode = require('qrcode');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const AppError = require('../../utils/errorHandlers/AppError');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer'); // Require nodemailer
@@ -46,7 +46,7 @@ const uniqueToken = generateUniqueToken();
 
 
 const signUp = handleAsync (async (req, res) => {
-  const { username, firstName, lastName, email, phoneNumber, businessName, businessLogo, roles } = req.body;
+  const { username, firstName, lastName, email, phoneNumber, businessName, businessLogo, role } = req.body;
  
 
   try {
@@ -78,8 +78,7 @@ const signUp = handleAsync (async (req, res) => {
       phoneNumber: phoneNumber,
       businessName: businessName,
       businessLogo: businessLogo,
-      // profilePic: profilePic,
-      roles: roles,
+      role: role,
       password: hashPassword,
       confirmPassword: hashPassword,
       uniqueID: uniqueID ,         //Storing the unique ID in the user document
@@ -87,10 +86,7 @@ const signUp = handleAsync (async (req, res) => {
     });
     // Save image cloudinary path to the database
      newUser.businessLogo = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
-    //  newUser.profilePic = { url: req.files.path, filename: req.files.filename };
-     console.log(res.file)
-
-
+     
 
     // Generate the QR code using userWithoutPassword and store the URL in newUser.qrCodeUrl
     QRcode.toDataURL(JSON.stringify(`${req.protocol}://${req.get('host')}/getuserinfo/${uniqueID}`), async (err, url) => {
@@ -102,42 +98,14 @@ const signUp = handleAsync (async (req, res) => {
         }
          
         // signing a jwt token to a user
-      // const Accesstoken = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.LOGIN_EXPIRES });
-      // const refreshToken = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRES });
-      // newUser.refreshToken = refreshToken;
+      const accessToken = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.LOGIN_EXPIRES });
+      
+          await newUser.save();
 
-      //  // Set the token in the Authorization header
-      //  res.setHeader('Authorization', `Bearer ${Accesstoken}`);
-
-       const roles = newUser.roles;
-    const accessToken = jwt.sign(
-      { newUser: { id: newUser._id, roles: newUser.roles } },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: '10m' }
-    );
-    
-    const refreshToken = jwt.sign(
-      { newUser: { id: newUser._id, roles: newUser.roles } },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    // Store refreshToken in database
-    newUser.refreshToken = refreshToken;
-        await newUser.save();
-
-    res.cookie('jwtCookie', refreshToken, {
-      httpOnly: true,
-      // secure: true,
-      sameSite: 'None',
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-        console.log(accessToken, roles)
 
           // Save the user to the database, including the QR code URL
-        res.status(200).json({ status: 'User Saved Successfully!!', accessToken, data:{user: newUser}});
-        // console.log(newUser, req.file)
+        res.status(200).json({ status: 'User Created Successfully!!', accessToken, data:{user: newUser}});
+    
 
     
    
@@ -188,9 +156,9 @@ const signUp = handleAsync (async (req, res) => {
 
 
 const profilePicUpload = handleAsync(async (req, res) => {
-  const { userId } = req.params;
+  const { id } = req.params;
   try {
-    const existingUser = await User.findOneAndUpdate({ _id: userId }, { profilePic: req.body });
+    const existingUser = await User.findOneAndUpdate({ id: id }, { profilePic: req.body });
 
     if (!existingUser) {
       return res.status(400).json({ error: 'Can not upload profile picture because the user does not exist' });
@@ -198,7 +166,7 @@ const profilePicUpload = handleAsync(async (req, res) => {
     const imageId = crypto.randomUUID();
 
     existingUser.profilePic = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
-; // Update the profilePic field
+ // Update the profilePic field
     await existingUser.save(); // Save the updated user
     
     return res.status(200).json({ msg: 'Profile picture saved', data: { existingUser } });
@@ -207,9 +175,6 @@ const profilePicUpload = handleAsync(async (req, res) => {
     res.status(500).json({ msg: 'Error Uploading Profile Photo' });
   }
 });
-
-
-
 
 
 

@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
-// const passportLocalMongoose = require('passport-local-mongoose');
 
 const userSchema = Schema({
 
@@ -69,7 +67,7 @@ const userSchema = Schema({
     }
     },
 
-   roles: {
+   role: {
     type: String,
     enum: ['user', 'admin', 'superAdmin'],
     default: 'user',
@@ -100,11 +98,7 @@ const userSchema = Schema({
     passwordChangedAt: Date,    
   passwordResetTokenExpires: Date,
     
-    refreshToken: {
-    type: String,
-    unique: true, // Ensure that refresh tokens are unique
-  },
-    
+  
     viewCount: {
     type: Number,
     default: 0, // Initialize the scan count to 0
@@ -126,12 +120,19 @@ userSchema.methods.createResetPasswordToken = function() {
     const resetToken = crypto.randomBytes(32).toString('hex');
     this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     this.passwordResetTokenExpires = Date.now() + 10 * 60 * 1000;
-     console.log(resetToken, this.passwordResetToken)
+  console.log(resetToken, this.passwordResetToken);
     return resetToken;
 }
 
-// userSchema.plugin(passportLocalMongoose);
+userSchema.methods.isPasswordChanged = async function (JWTtimeStamp) {
+  if (this.passwordChangedAt) {
+    const pswdChangedTimeStamp = pasrseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    console.log(pswdChangedTimeStamp, JWTtimeStamp);
 
+    return JWTtimeStamp < pswdChangedTimeStamp;
+  }
+  return false
+}
 const User = new mongoose.model('User', userSchema);
 
 module.exports = User;

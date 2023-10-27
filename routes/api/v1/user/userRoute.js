@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const {editUser, getUserInfo, forgotPassword, resetPassword, getUser} = require('../../../controllers/userController');
-const { isLoggedIn  } = require('../../../middleware/isLoggedIn');
-const { verifyToken  } = require('../../../middleware/verifyToken');
+const {editUser, getUserInfo, forgotPassword, resetPassword, getUser} = require('../../../../controllers/userController');
+const { isLoggedIn  } = require('../../../middleware/../../middleware/isLoggedIn');
 
 
 

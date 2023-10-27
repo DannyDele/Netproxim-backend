@@ -1,5 +1,5 @@
 const User = require('../../model/User');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const QRcode = require('qrcode');
@@ -48,14 +48,12 @@ const uniqueToken = generateUniqueToken();
 
 const adminSignUp = handleAsync (async (req, res) => {
   try {
-    // Check if the user making the request is authorized (e.g., superadmin)
-    // Implement your own authorization logic here
 
     // If authorized, proceed with admin registration
     const { username, firstName, lastName, email, phoneNumber, businessName, businessLogo } = req.body;
 
     // Set the role to "admin" programmatically
-    const roles = 'admin';
+    const role = 'admin';
 
     const existingUserWithEmail = await User.findOne({ email });
 
@@ -86,7 +84,7 @@ const adminSignUp = handleAsync (async (req, res) => {
       phoneNumber: phoneNumber,
       businessName: businessName,
       businessLogo: businessLogo,
-      roles: roles, // Set the role to "admin"
+      role: role, // Set the role to "admin"
       password: hashPassword,
       confirmPassword: hashPassword,
       uniqueID: uniqueID,
@@ -105,37 +103,15 @@ const adminSignUp = handleAsync (async (req, res) => {
         }
          
       //   // signing a jwt token to a user
-      // const Accesstoken = jwt.sign({ id: newAdmin._id, role: newAdmin.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.LOGIN_EXPIRES });
-      // const refreshToken = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRES });
-      // newUser.refreshToken = refreshToken;
-
-      //  // Set the token in the Authorization header
-      //  res.setHeader('Authorization', `Bearer ${Accesstoken}`);
-
-       const roles = newAdmin.roles;
-    const accessToken = jwt.sign(
-      { newAdmin: { id: newAdmin._id, roles: newAdmin.roles } },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: '10m' }
-    );
-    
-    const refreshToken = jwt.sign(
-      { newAdmin: { id: newAdmin._id, roles: newAdmin.roles } },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    // Store refreshToken in database
-    newAdmin.refreshToken = refreshToken;
+      const accessToken = jwt.sign({ id: newAdmin._id, role: newAdmin.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.LOGIN_EXPIRES });
+      
     await newAdmin.save();
     
-
-
-        console.log(accessToken)
+console.log(accessToken)
 
 
     // Save the admin user
-      res.status(200).json({ msg: 'Admin user created successfully!!', accessToken,data: { user: newAdmin } });
+      res.status(200).json({ msg: 'Admin Created Successfully!!', accessToken,data: { user: newAdmin } });
       
    
         //Send the random password to the user's email
@@ -173,10 +149,34 @@ const adminSignUp = handleAsync (async (req, res) => {
         //   }
         // });
        });
+       
   } catch (error) {
     console.error('Error during admin registration:', error);
     return res.status(500).json({ error: 'Server error' });
   }
 });
 
-module.exports = { adminSignUp };
+
+
+const profilePicUpload = handleAsync(async (req, res) => {
+  const { id } = req.params;
+  try {
+    const existingUser = await User.findOneAndUpdate({ id: id }, { profilePic: req.body });
+
+    if (!existingUser) {
+      return res.status(400).json({ error: 'Can not upload profile picture because the user does not exist' });
+    }
+    const imageId = crypto.randomUUID();
+
+    existingUser.profilePic = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
+ // Update the profilePic field
+    await existingUser.save(); // Save the updated user
+    
+    return res.status(200).json({ msg: 'Profile picture saved', data: { existingUser } });
+  } catch (err) {
+    console.log('Error Uploading Profile Photo', err);
+    res.status(500).json({ msg: 'Error Uploading Profile Photo' });
+  }
+});
+
+module.exports = { adminSignUp, profilePicUpload };
