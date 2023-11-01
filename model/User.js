@@ -31,10 +31,45 @@ const userSchema = Schema({
         // unique: true,
         // lowercase: true
   },
+    address: {
+        type: String,
+        required: [true, 'Address is Required'],
+  },
+    
+    facebook: {
+        type: String,
+  },
+    
+    instagram: {
+        type: String,
+  },
+    
+    twitter: {
+        type: String,
+  },
+    whatsapp: {
+        type: String,
+  },
     
     phoneNumber: {
         type: String,
         required: [true, 'Phone Number is Required']
+  },
+  
+  gender:{
+    type: String,
+    enum: ['male', 'female', 'others']
+  },
+  
+  businessName: {
+    type: String,
+    required: [true, 'Business Name is Required']
+
+  },
+  businessAddress: {
+    type: String,
+    required: [true, 'Business Address is Required']
+
   },
     
    businessLogo: {

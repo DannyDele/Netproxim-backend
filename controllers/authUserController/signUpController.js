@@ -10,17 +10,17 @@ const handleAsync = require('../../utils/errorHandlers/handleAsync')
 
    
 
-//    //Create Email Transport    
-//       const transporter = nodemailer.createTransport({
-//       host: process.env.GMAIL_HOST,    // Gmail SMTP server
-//       port: process.env.GMAIL_PORT,                // SMTP port
-//       secure: true,             // Use SSL/TLS
-//       auth: {
-//           user: process.env.GMAIL_USER,  // Your Gmail email address
-//           pass: process.env.GMAIL_PASS,    // Your Gmail password
+   //Create Email Transport    
+      const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,    // Gmail SMTP server
+      port: process.env.EMAIL_PORT,                // SMTP port
+      secure: true,             // Use SSL/TLS
+      auth: {
+          user: process.env.EMAIL_USER,  // Your Gmail email address
+          pass: process.env.EMAIL_PASS,    // Your Gmail password
 
-//   },
-// });
+  },
+});
 
 
 const generateRandomPassword = (length) => {
@@ -46,7 +46,23 @@ const uniqueToken = generateUniqueToken();
 
 
 const signUp = handleAsync (async (req, res) => {
-  const { username, firstName, lastName, email, phoneNumber, businessName, businessLogo, role } = req.body;
+  const { username,
+    firstName,
+    lastName,
+    email,
+    phoneNumber,
+    address,
+    facebook,
+    twitter,
+    instagram,
+    whatsapp,
+    gender,
+    businessName,
+    businessAddress,
+    businessLogo,
+    role,
+
+  } = req.body;
  
 
   try {
@@ -71,12 +87,19 @@ const signUp = handleAsync (async (req, res) => {
 
     
     const newUser = new User({
-      username: username,
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      phoneNumber: phoneNumber,
-      businessName: businessName,
+      username,
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+     address,
+     facebook,
+     twitter,
+     instagram,
+     whatsapp,
+     gender,
+     businessName,
+     businessAddress,
       businessLogo: businessLogo,
       role: role,
       password: hashPassword,
@@ -109,40 +132,40 @@ const signUp = handleAsync (async (req, res) => {
 
     
    
-        //Send the random password to the user's email
-//         const mailOptions = {
-//           from: 'Smart ID Card Solution <process.env.GMAIL_USER>', // Sender's email address
-//           to: email,                       // User's email address
-//           subject: 'Smart ID Card Solutions',
-//           html: `
-//     <p>Dear ${firstName} ${lastName},</p>
-//     <p>Welcome to Smart ID Card Solutions! We are excited to have you as a member of our community.</p>
-//     <p>Your registration is complete, and you can now showcase your business information effortlessly.</p>
-//     <p>Here are your registration details:</p>
-//     <ul>
-//       <li><strong>Username:</strong> ${username}</li>
-//       <li><strong>Email:</strong> ${email}</li>
-//       <li><strong>Phone Number:</strong> ${phoneNumber}</li>
-//       <li><strong>Business Name:</strong> ${businessName}</li>
-//     </ul>
-//     <p>Your random password is: <strong>${randomPassword}</strong></p>
-//     <p><em>Note: You can change your password after successfully signing in.</em></p>
-//     <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
-//     <p>Thank you for choosing Smart ID Card Solutions!</p>
-//     <p>Best regards,<br>Your Smart ID Card Solutions Team</p>
-//   `,
-// };
+        // Send the random password to the user's email
+        const mailOptions = {
+          from: 'Smart ID Card Solution <' + process.env.EMAIL_USER + '>', // Sender's email address
+          to: email,                       // User's email address
+          subject: 'Welcome to Smart ID Card Solutions',
+          html: `
+    <p>Dear ${firstName} ${lastName},</p>
+    <p>Welcome to Smart ID Card Solutions! We are excited to have you as a member of our community.</p>
+    <p>Your registration is complete, and you can now showcase your business information effortlessly.</p>
+    <p>Here are your registration details:</p>
+    <ul>
+      <li><strong>Username:</strong> ${username}</li>
+      <li><strong>Email:</strong> ${email}</li>
+      <li><strong>Phone Number:</strong> ${phoneNumber}</li>
+      <li><strong>Business Name:</strong> ${businessName}</li>
+    </ul>
+    <p>Your random password is: <strong>${randomPassword}</strong></p>
+    <p><em>Note: You can change your password after successfully signing in.</em></p>
+    <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
+    <p>Thank you for choosing Smart ID Card Solutions!</p>
+    <p>Best regards,<br>Your Smart ID Card Solutions Team</p>
+  `,
+};
       
 
-        // transporter.sendMail(mailOptions, (error, info) => {
-        //   if (error) {
-        //     console.error('Error sending email:', error);
-        //     return res.status(500).json({ error: 'Error sending email' });
-        //   } else {
-        //     console.log('Email sent:', info.response);
-        //     return res.status(200).json({ message: 'User Created Successfully and Email sent with random password' });
-        //   }
-        // });
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error('Error sending email:', error);
+            return res.status(500).json({ error: 'Error sending email' });
+          } else {
+            console.log('Email sent:', info.response);
+            return res.status(200).json({ message: 'User Created Successfully and Email sent with random password' });
+          }
+        });
       
     });
       console.log('User Created Successfully!!')

@@ -50,7 +50,20 @@ const adminSignUp = handleAsync (async (req, res) => {
   try {
 
     // If authorized, proceed with admin registration
-    const { username, firstName, lastName, email, phoneNumber, businessName, businessLogo } = req.body;
+    const { username,
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      address,
+      facebook,
+     twitter,
+     instagram,
+     whatsapp,
+     gender,
+     businessName,
+     businessAddress,
+      businessLogo } = req.body;
 
     // Set the role to "admin" programmatically
     const role = 'admin';
@@ -77,12 +90,19 @@ const adminSignUp = handleAsync (async (req, res) => {
 
     // Create a new admin user
     const newAdmin = new User({
-      username: username,
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      phoneNumber: phoneNumber,
-      businessName: businessName,
+      username,
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      address,
+     facebook,
+     twitter,
+     instagram,
+     whatsapp,
+     gender,
+     businessName,
+     businessAddress,
       businessLogo: businessLogo,
       role: role, // Set the role to "admin"
       password: hashPassword,
