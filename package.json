@@ -4,13 +4,13 @@
   "description": "complementry id card system",
   "main": "server.js",
   "scripts": {
-   "start": "node server.js",
+    "start": "node server.js",
     "dev": "nodemon server.js"
   },
   "author": "Daniel Ogbodo",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.0",
     "connect-flash": "^0.1.1",
     "cookie-parser": "^1.4.6",

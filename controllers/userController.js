@@ -1,5 +1,5 @@
 const User = require('../model/User');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -96,19 +96,19 @@ const forgotPassword = handleAsync (async(req, res, next) => {
 
      //Create Email Transport    
       const transporter = nodemailer.createTransport({
-      host: process.env.GMAIL_HOST,    // Gmail SMTP server
-      port: process.env.GMAIL_PORT,                // SMTP port
+      host: process.env.EMAIL_HOST,    // Gmail SMTP server
+      port: process.env.EMAIL_PORT,                // SMTP port
       secure: true,             // Use SSL/TLS
       auth: {
-          user: process.env.GMAIL_USER,  // Your Gmail email address
-          pass: process.env.GMAIL_PASS,    // Your Gmail password
+          user: process.env.EMAIL_USER,  // Your Gmail email address
+          pass: process.env.EMAIL_PASS,    // Your Gmail password
 
   },
 });
 
         //Send the random password to the user's email
         const mailOptions = {
-          from: 'Smart ID Card Solution <process.env.GMAIL_USER>', // Sender's email address
+          from: 'Smart ID Card Solution <' + process.env.EMAIL_USER + '>', // Sender's email address
           to: user.email,                       // User's email address
           subject: 'Password Reset',
           html: `

@@ -1,47 +1,43 @@
 const util = require('util');
 const jwt = require('jsonwebtoken');
-const User = require('../model/User')
+const User = require('../model/User');
+const AppError = require('../utils/errorHandlers/AppError');
 
 
 const isAdmin = async (req, res, next) => {
+
   // read the token a check if it exist
-  const refreshToken = req.headers.authorization;
-  let token;
+  const token = req.headers.authorization;
+  let accessToken;
  
-  if (refreshToken && refreshToken.startsWith('Bearer ')) {
-    token = refreshToken.split(' ')[1];
+  if (token && token.startsWith('bearer')) {
+    accessToken = token.split(' ')[1];
   }
 
-  if (!token) {
-    return res.status(401).json({ msg: 'Authoriztion failed, you need to be logged in first' });
+  // Check if the user is authenticated
+  if (!req.user) {
+    return res.status(401).json({ msg: 'Unauthorized' });
   }
+
+  // Check if the user has the admin role
 
   try {
-     // Validate the token
-  const decoded = await util.promisify(jwt.verify)(token, process.env.REFRESH_TOKEN_SECRET);
-      console.log(decoded);
-        
-      // Check if user is an Admin
-        
-      if (decoded.roles === 'admin') {
-          next();
-      }
-      else{
-          return res.status(403).json({ message: 'Access denied. User is not an admin.' });
-          }
-    
+    // Validate the token
+    const decodedAccessToken = await util.promisify(jwt.verify)(accessToken, process.env.ACCESS_TOKEN_SECRET);
     // check if the user still exist
-    // const user = await User.findById(decoded.id);
-    // if (!user) {
-    //   return res.status(401).json({msg: 'The user with that token does not exist'})
-    // }
+    const user = await User.findById(decodedAccessToken.id);
+    console.log(decodedAccessToken.role)
+    
+    if (decodedAccessToken.role !== 'admin') {
+      return next(new AppError('Forbidden', 403));
+    }
 
-  } catch (error) {
-      // Handle other JWT verification errors
-      return res.status(401).json({ msg: 'Invalid token' });
+    // Allow Admin Access to Route
+    next()
+  }
+  catch (error) {
+    console.log('Error in verifying user', error)
   }
 }
 
-;
-
-module.exports = { isAdmin };
+module.exports = { isAdmin }
