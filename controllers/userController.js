@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const handleAsync = require('../utils/errorHandlers/handleAsync');
-const {recordViewEvent, aggregateDailyViewCount, aggregateMonthlyViewCount} = require('../services/services'); 
+const {recordViewEvent, aggregateDailyViewCountWithNames,  aggregateMonthlyViewCountWithNames,} = require('../services/services'); 
 
 
 // Json web token assigned to user function
@@ -32,6 +32,34 @@ const getUser = handleAsync (async (req, res) => {
   }
 });
 
+
+const checkUsernameAvailability = handleAsync(async (req, res) => {
+  const { username } = req.query;
+
+  const existingUser = await User.findOne({ username });
+
+  try {
+    
+     // Check the length of the username
+  if (username.length <= 5) {
+    return res.status(400).json({ msg: 'Username length must be at least six characters long' });
+  }
+
+
+    if (!existingUser) {
+      return res.status(200).json({ available: true });
+    }
+
+  if (existingUser.username === username) {
+    return res.status(200).json({ available: false });
+    }
+    
+
+  } catch (error) {
+    console.log('Error Checking Username Availability:', error)
+    return res.status(500).json({ error: 'Server error' });
+    }
+});
 
 
 const editUser = handleAsync (async (req, res) => {
@@ -68,10 +96,11 @@ const getUserInfo =  handleAsync (async (req, res) => {
 
     // You can choose to aggregate view counts as needed
     // For example, daily view counts:
-    const dailyCounts = await aggregateDailyViewCount();
+    const dailyCounts = await aggregateDailyViewCountWithNames(user);
+    console.log(dailyCounts)
 
     // Or monthly view counts:
-    const monthlyCounts = await aggregateMonthlyViewCount();
+    const monthlyCounts = await aggregateMonthlyViewCountWithNames(user);
 
     // Return the user information and any aggregated data as a response
     res.status(200).json({ user, dailyCounts, monthlyCounts });
@@ -160,4 +189,4 @@ user.passwordChangedAt = Date.now();
 })
 
 
-module.exports = {  getUser, editUser , getUserInfo, resetPassword, forgotPassword };
+module.exports = {  getUser, editUser , getUserInfo, resetPassword, forgotPassword, checkUsernameAvailability };

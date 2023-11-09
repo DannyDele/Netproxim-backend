@@ -32,10 +32,10 @@ const signIn = handleAsync (async (req, res, next) => {
     const accessToken = jwt.sign({ id: foundUser._id, role: foundUser.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.LOGIN_EXPIRES });
     // const refreshToken = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.REFRESH_SECRET_STR, { expiresIn: process.env.REFRESH_TOKEN_EXPIRES });
     // newUser.refreshToken = refreshToken;
-
+ 
   
     // Return a success response
-    return res.status(200).json({ message: 'Sign-in successful',accessToken });
+    return res.status(200).json({ message: 'Sign-in successful',accessToken, foundUser });
   } catch (error) {
     console.error('Error during sign-in:', error);
     return res.status(500).json({ error: 'Server error' });

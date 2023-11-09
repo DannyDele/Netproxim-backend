@@ -100,7 +100,11 @@ const userSchema = Schema({
      public_id: {
       type: String, // Store the Cloudinary public_id
     }
-    },
+  },
+   
+  aboutBusiness: {
+     type: String,
+   },
 
    role: {
     type: String,
@@ -138,6 +142,20 @@ const userSchema = Schema({
     type: Number,
     default: 0, // Initialize the scan count to 0
   },
+    dailyCounts: [
+  {
+    date: Date,
+    count: Number,
+    dayName: String,     // Add a field to store the day name
+  },
+],
+monthlyCounts: [
+  {
+    date: Date,
+    count: Number,
+    monthName: String,  // Add a field to store the month name
+  },
+],
     
       viewEvents: [
     {

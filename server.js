@@ -1,13 +1,16 @@
-if (process.env.NODE_ENV !== 'production') {
-    require('dotenv').config();
+// if (process.env.NODE_ENV !== 'production') {
+//     require('dotenv').config({path: './env'});
 
-}
+// }
 
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 const session = require('express-session');
 const flash = require('connect-flash');
+require('dotenv').config();
+const cors = require('cors');
+
 
 
 
@@ -35,6 +38,10 @@ async function connectToDatabase() {
 // Call the function to establish the connection
 connectToDatabase();
 
+const { corsOptions } = require('./config/corsOptions');
+
+// Use the CORS middleware with the configured options
+app.use(cors(corsOptions));
 
 
 
@@ -57,7 +64,8 @@ app.use('/', authRoute);
 // Error Handle Middleware
 app.use((err, req, res, next) => {
   const { message = 'something went wrong', status = 500 } = err;
-  res.status(status).send({msg: message });
+  res.status(status).send({ msg: message });
+  console.log(err)
 });
 
 app.listen(port, () => {
