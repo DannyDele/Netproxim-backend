@@ -10,6 +10,7 @@
   "author": "Daniel Ogbodo",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.6.1",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.0",
     "connect-flash": "^0.1.1",

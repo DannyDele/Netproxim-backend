@@ -108,7 +108,7 @@ const signUp = handleAsync (async (req, res) => {
       resetToken: uniqueToken
     });
     // Save image cloudinary path to the database
-     newUser.businessLogo = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
+    newUser.businessLogo = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
      
 
     // Generate the QR code using userWithoutPassword and store the URL in newUser.qrCodeUrl
