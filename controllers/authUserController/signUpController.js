@@ -7,6 +7,8 @@ const nodemailer = require('nodemailer'); // Require nodemailer
 const session = require('express-session');
 const jwt = require('jsonwebtoken');
 const handleAsync = require('../../utils/errorHandlers/handleAsync')
+const {cloudinary} = require('../../cloudinary')
+
 
    
 
@@ -108,7 +110,7 @@ const signUp = handleAsync (async (req, res) => {
       resetToken: uniqueToken
     });
     // Save image cloudinary path to the database
-     newUser.businessLogo = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
+    newUser.businessLogo = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
      
 
     // Generate the QR code using userWithoutPassword and store the URL in newUser.qrCodeUrl
@@ -181,15 +183,33 @@ const signUp = handleAsync (async (req, res) => {
 const profilePicUpload = handleAsync(async (req, res) => {
   const { id } = req.params;
   try {
-    const existingUser = await User.findOneAndUpdate({ id: id }, { profilePic: req.body });
+    const existingUser = await User.findByIdAndUpdate({ _id: id });
 
     if (!existingUser) {
       return res.status(400).json({ error: 'Can not upload profile picture because the user does not exist' });
     }
+
+    // Handle file upload
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided for profile picture upload' });
+    }
+
+    // If the user already has a profile picture on Cloudinary, delete the old one
+    if (existingUser.profilePic && existingUser.profilePic.filename) {
+      try {
+        // Delete the old profile picture from Cloudinary
+        await cloudinary.uploader.destroy(existingUser.profilePic.filename);
+      } catch (deleteError) {
+        console.error('Error deleting old profile picture from Cloudinary', deleteError);
+        // Handle the error as needed (logging, response, etc.)
+      }
+    }
+
     const imageId = crypto.randomUUID();
 
     existingUser.profilePic = { url: req.file.path, filename: req.file.filename, public_id: `${imageId}-${Date.now()}` };
- // Update the profilePic field
+    console.log(req.file)
+    // Update the profilePic field
     await existingUser.save(); // Save the updated user
     
     return res.status(200).json({ msg: 'Profile picture saved', data: { existingUser } });
