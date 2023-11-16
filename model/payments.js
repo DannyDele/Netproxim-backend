@@ -1,5 +1,8 @@
-const mongoose =require('mongoose');
-const paymentSchema = new mongoose.Schema({
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
+
+
+const paymentSchema = new Schema({
     email: {
         type: String,
         required: [true, 'Email is Required']
@@ -15,6 +18,9 @@ const paymentSchema = new mongoose.Schema({
         type: String
         
     },
+      credoReference:{
+        type: String
+    },
     status: {
         type: String,
         enum:['Pending', 'Completed', 'Failed']
@@ -23,8 +29,15 @@ const paymentSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    }
     });
     // const payment = mongoose.model('Payments', paymentSchema);
     // module.exports = {payment}
-    module.exports = mongoose.model("payments",paymentSchema);
+    const Payment = mongoose.model("payments",paymentSchema);
+    
+module.exports = Payment;
   

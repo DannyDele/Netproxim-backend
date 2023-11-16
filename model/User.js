@@ -165,6 +165,13 @@ monthlyCounts: [
       },
     },
   ],
+      
+  payments: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Payment'
+    }
+  ]
 
     
 });

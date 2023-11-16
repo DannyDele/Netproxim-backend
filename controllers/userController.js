@@ -141,8 +141,8 @@ const forgotPassword = handleAsync (async(req, res, next) => {
           to: user.email,                       // User's email address
           subject: 'Password Reset',
           html: `
-    We have recieved a passwordReset. Pleease the below link to reset your password <br>
-    ${resetUrl} This reset password link will be valid for only 10min
+    You have recieved a Password Reset link. Please use the below link to reset your password <br>
+    ${resetUrl} <br> Note: This reset password link will be valid for only 10min
     
   `,
 };

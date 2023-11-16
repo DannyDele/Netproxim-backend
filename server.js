@@ -11,6 +11,8 @@ const flash = require('connect-flash');
 require('dotenv').config();
 const cors = require('cors');
 const { corsOptions } = require('./config/corsOptions');
+const ejs = require('ejs');
+const path = require('path')
 
 
 
@@ -42,6 +44,10 @@ connectToDatabase();
 
 
 
+app.set('view engine', 'ejs');
+app.use(express.static('public'))
+app.set('views', path.join(__dirname, '/views'))
+
 //set up bodyparser
 app.use(bodyParser.urlencoded({extended: true})) 
 app.use(bodyParser.json()) 
@@ -66,7 +72,9 @@ app.use('/', authRoute);
 //payment route
 app.use('/', paymentRoute);
 
-
+app.get('/credo', (req, res) => {
+  res.render('home')
+})
 
 
 // Error Handle Middleware
