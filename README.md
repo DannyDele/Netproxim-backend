@@ -1,0 +1,1 @@
+NetProxim is a smart business card system where businesses can quickly share their business information by scanning their unique qrcode.Smart business card that serves as a convenient and eco-friendly alternative to traditional paper cards
